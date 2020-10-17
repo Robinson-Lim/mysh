@@ -14,7 +14,7 @@ void Run()
 int main(void)
 {
     char test[] = "head -a -b -c120 -d < test.txt > second.txt | wc -a -b | grep -a -b 1";
-    // char test[] = "< test.txt";
+    // char test[] = "< test.txt > ttest.txt >> tttext.txt";
 
     InitalizeCommandPool(&commandPool, MAX_PROCESS_CALL);
 
@@ -48,7 +48,8 @@ int main(void)
     }
     printf("Run background : %d\n", commandPool.background);
 
-    ClearCommandPool(&commandPool);
+    // ClearCommandPool(&commandPool);
+    ReleaseCommandPool(&commandPool);
 
     return 0;
 }

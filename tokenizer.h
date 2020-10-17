@@ -45,6 +45,7 @@ void PushArgument(Command* command, const char* argument);
 
 void InitalizeCommandPool(CommandPool* commandPool, int capacity);
 void ClearCommandPool(CommandPool* commandPool);
+void ReleaseCommandPool(CommandPool* commandPool);
 int InsertCommand(CommandPool* commandPool, Command* command);
 
 int Tokenize(const char* line, CommandPool* commandPool);

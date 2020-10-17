@@ -8,48 +8,6 @@
 #include <memory.h>
 #include <string.h>
 
-void InitalizeCommandPool(CommandPool* commandPool, int capacity)
-{
-    commandPool->capacity = capacity;
-    commandPool->curPos = 0;
-    commandPool->size = 0;
-    commandPool->background = false;
-
-    commandPool->commandPool = (Command**)malloc(sizeof(Command*) * capacity);
-    memset(commandPool->commandPool, 0, sizeof(Command*) * capacity);
-}
-
-void ClearCommandPool(CommandPool* commandPool)
-{
-    for (int i = 0 ; i < commandPool->size ; i++)
-    {
-        if (commandPool->commandPool[i] != NULL)
-        {
-            FreeCommand(commandPool->commandPool[i]);
-        }
-    }
-
-    memset(commandPool, 0, sizeof(Command*) * commandPool->capacity);
-
-    commandPool->size = 0;
-    commandPool->curPos = 0;
-}
-
-int InsertCommand(CommandPool* commandPool, Command* command)
-{
-    if (commandPool->size < commandPool->capacity)
-    {
-        commandPool->commandPool[commandPool->size] = command;
-        commandPool->size++;
-    }
-    else
-    {
-        return -1;
-    }
-
-    return 0;
-}
-
 void InitalizeCommand(Command* command)
 {
     memset(command, 0, sizeof(Command));
@@ -169,6 +127,61 @@ void PushArgument(Command* command, const char* argument)
     command->flags[command->flagsSize] = argClone;
     command->flags[command->flagsSize + 1] = NULL;
     command->flagsSize++;
+}
+
+void InitalizeCommandPool(CommandPool* commandPool, int capacity)
+{
+    commandPool->capacity = capacity;
+    commandPool->curPos = 0;
+    commandPool->size = 0;
+    commandPool->background = false;
+
+    commandPool->commandPool = (Command**)malloc(sizeof(Command*) * capacity);
+    memset(commandPool->commandPool, 0, sizeof(Command*) * capacity);
+}
+
+void ClearCommandPool(CommandPool* commandPool)
+{
+    for (int i = 0 ; i < commandPool->size ; i++)
+    {
+        if (commandPool->commandPool[i] != NULL)
+        {
+            FreeCommand(commandPool->commandPool[i]);
+        }
+    }
+
+    memset(commandPool, 0, sizeof(Command*) * commandPool->capacity);
+
+    commandPool->size = 0;
+    commandPool->curPos = 0;
+}
+
+void ReleaseCommandPool(CommandPool* commandPool)
+{
+    for (int i = 0 ; i < commandPool->size ; i++)
+    {
+        if (commandPool->commandPool[i] != NULL)
+        {
+            FreeCommand(commandPool->commandPool[i]);
+        }
+    }
+
+    free(commandPool->commandPool);
+}
+
+int InsertCommand(CommandPool* commandPool, Command* command)
+{
+    if (commandPool->size < commandPool->capacity)
+    {
+        commandPool->commandPool[commandPool->size] = command;
+        commandPool->size++;
+    }
+    else
+    {
+        return -1;
+    }
+
+    return 0;
 }
 
 int Tokenize(const char* line, CommandPool* commandPool)
