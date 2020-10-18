@@ -1,6 +1,6 @@
-OBJS	= main.o tokenizer.o utils.o
-SOURCE	= main.c tokenizer.c utils.c
-HEADER	= tokenizer.h utils.h
+OBJS	= main.o tokenizer.o utils.o internal_command.o
+SOURCE	= main.c tokenizer.c utils.c internal_command.c
+HEADER	= tokenizer.h utils.h internal_command.h
 OUT	= mysh
 CC	 = gcc
 FLAGS	 = -g -c -Wall
@@ -17,6 +17,9 @@ tokenizer.o: tokenizer.c
 
 utils.o: utils.c
 	$(CC) $(FLAGS) utils.c 
+
+internal_command.o: internal_command.c
+	$(CC) $(FLAGS) internal_command.c
 
 clean:
 	rm -f $(OBJS) $(OUT)

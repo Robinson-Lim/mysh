@@ -47,6 +47,7 @@ void InitalizeCommandPool(CommandPool* commandPool, int capacity);
 void ClearCommandPool(CommandPool* commandPool);
 void ReleaseCommandPool(CommandPool* commandPool);
 int InsertCommand(CommandPool* commandPool, Command* command);
+void PrintCommandPool(CommandPool* commandPool);
 
 int Tokenize(const char* line, CommandPool* commandPool);
 

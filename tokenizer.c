@@ -150,7 +150,7 @@ void ClearCommandPool(CommandPool* commandPool)
         }
     }
 
-    memset(commandPool, 0, sizeof(Command*) * commandPool->capacity);
+    memset(commandPool->commandPool, 0, sizeof(Command*) * commandPool->capacity);
 
     commandPool->size = 0;
     commandPool->curPos = 0;
@@ -182,6 +182,39 @@ int InsertCommand(CommandPool* commandPool, Command* command)
     }
 
     return 0;
+}
+
+void PrintCommandPool(CommandPool* commandPool)
+{
+    printf("===== PRINT COMMAND POOL INFO =====\n");
+    for(int i = 0 ; i < commandPool->size ; i++)
+    {
+        Command* command = commandPool->commandPool[i];
+
+        printf("Command : %s\n", command->command);
+        for (int f = 0 ; f < command->flagsSize ; f++)
+        {
+            printf("\tFlag : %s\n", command->flags[f]);
+        }
+
+        for (int f = 0 ; f < command->inputRedirectionCount ; f++)
+        {
+            printf("\t< Filename : %s\n", command->inputRedirectionFiles[f].filepath);
+            printf("\t< flag : %d\n", command->inputRedirectionFiles[f].flags);
+            printf("\t< mode : %d\n", command->inputRedirectionFiles[f].mode);
+        }
+
+        for (int f = 0 ; f < command->outputRedirectionCount ; f++)
+        {
+            printf("\t> Filename : %s\n", command->outputRedirectionFiles[f].filepath);
+            printf("\t> flag : %d\n", command->outputRedirectionFiles[f].flags);
+            printf("\t> mode : %d\n", command->outputRedirectionFiles[f].mode);
+        }
+
+        printf("\n");
+    }
+    printf("Run background : %d\n", commandPool->background);
+    printf("===== END COMMAND POOL INFO =====\n");
 }
 
 int Tokenize(const char* line, CommandPool* commandPool)
@@ -226,6 +259,7 @@ int Tokenize(const char* line, CommandPool* commandPool)
 
             if (redirectTo)
             {
+                flags |= O_WRONLY;
                 if (appendMode)
                 {
                     flags |= O_APPEND;
@@ -241,6 +275,8 @@ int Tokenize(const char* line, CommandPool* commandPool)
             }
             else if (redirectBy)
             {   
+                flags |= O_RDONLY;
+
                 InsertInputRedirectionFile(curCommand, commandToken, flags, mode);
 
                 redirectBy = false;
