@@ -261,6 +261,10 @@ int Tokenize(const char* line, CommandPool* commandPool)
                 redirectTo = true;
                 appendMode = true;
             }
+            else if(strcmp(commandToken, "&") == 0)
+            {
+                commandPool->background = true;
+            }
             else
             {
                 if (curCommand->command == NULL)
