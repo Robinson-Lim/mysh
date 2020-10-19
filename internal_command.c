@@ -15,6 +15,8 @@ char* INTERNAL_COMMAND[] = {
 
 bool IsInternalCommand(const char* command)
 {
+    if (command == NULL) return false;
+    
     for(int i = 0; i < (sizeof(INTERNAL_COMMAND) / sizeof(INTERNAL_COMMAND[0])) ; i++)
     {   
         if (strcmp(INTERNAL_COMMAND[i], command) == 0)

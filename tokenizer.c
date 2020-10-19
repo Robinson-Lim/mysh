@@ -219,9 +219,10 @@ void PrintCommandPool(CommandPool* commandPool)
 
 int Tokenize(const char* line, CommandPool* commandPool)
 {
-    char* lineClone = (char*)malloc(sizeof(char) * strlen(line));
-    strcpy(lineClone, line);
-    lineClone = trim(lineClone);
+    char* tmpLine = (char*)malloc(sizeof(char) * strlen(line));
+    strcpy(tmpLine, line);
+    
+    char* lineClone = trim(tmpLine);
 
     // Tokenize by |(pipe)
     char** tmpPipeTokens = (char**)malloc(sizeof(char*) * commandPool->capacity);
@@ -276,6 +277,7 @@ int Tokenize(const char* line, CommandPool* commandPool)
             else if (redirectBy)
             {   
                 flags |= O_RDONLY;
+                flags |= O_TRUNC;
 
                 InsertInputRedirectionFile(curCommand, commandToken, flags, mode);
 
@@ -318,7 +320,7 @@ int Tokenize(const char* line, CommandPool* commandPool)
 
     // Insert to command pool
 
-    free(lineClone);
+    free(tmpLine);
 
     for (int i = 0 ; i < commandPool->size; i++)
     {

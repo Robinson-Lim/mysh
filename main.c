@@ -107,7 +107,7 @@ void RunCommand(const CommandPool* commandPool)
                         fprintf(stderr, "Failed to run internal command\n");
                     }
                 }
-                else
+                else if (command != NULL)
                 {
                     printf("External command\n");
                 }

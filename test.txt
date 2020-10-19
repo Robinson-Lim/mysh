@@ -1,9 +1,0 @@
-=== help commands ===
-help : print internal commands
-cd : change directory
-ls : list directory
-ps : process status
-pwd : current password
-date : print current date
-whoami : print current user
-=== ============= ===
