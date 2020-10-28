@@ -7,13 +7,10 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <limits.h>
+#include <linux/limits.h>
 #include "tokenizer.h"
 #include "internal_command.h"
 #include "utils.h"
-
-#ifndef PATH_MAX
-#define PATH_MAX 2048
-#endif
 
 #define MAX_PROCESS_CALL 16
 
@@ -35,9 +32,6 @@ void RunCommand(const CommandPool* commandPool)
         Command* curCommand = commandPool->commandPool[i];
         const char* command = curCommand->command;
 
-        int* inputFds = NULL;
-        int* outputFds = NULL;
-
         bool runBackground = commandPool->background;
         bool isInternalCommand = IsInternalCommand(command);
         int pid = 1;
@@ -46,7 +40,6 @@ void RunCommand(const CommandPool* commandPool)
         if (commandPool->size > 1)
         {
             pipe(pipeDesc);
-            // printf("PIPE %d %d\n", pipeDesc[0], pipeDesc[1]);
         }
 
         if (runBackground || !isInternalCommand)
@@ -63,34 +56,16 @@ void RunCommand(const CommandPool* commandPool)
         {
             if (commandPool->size > 1)
             {
-                // printf("PIDA : %d - %d\n", pid, commandPool->size);
                 if (prevInput != STDIN_FILENO)
                 {
-                    // printf("%d %s %d A\n",pid,command, prevInput);
                     dup2(prevInput, 0);
                     close(prevInput);
                 }
                 if (pipeDesc[1] != STDOUT_FILENO && i != (commandPool->size - 1))
                 {
-                    // printf("%d %s %d B\n",pid,command, pipeDesc[1]);
                     dup2(pipeDesc[1], STDOUT_FILENO);
                     close(pipeDesc[1]);
                 }
-                else
-                {
-                    // printf("%d %s C\n",pid,command);
-                    // dup2(savedStdout, STDOUT_FILENO);
-                }
-            }
-
-            if (curCommand->inputRedirectionCount > 0)
-            {
-                inputFds = (int*)malloc(sizeof(int) * curCommand->inputRedirectionCount);
-            }
-
-            if (curCommand->outputRedirectionCount > 0)
-            {
-                outputFds = (int*)malloc(sizeof(int) * curCommand->outputRedirectionCount);
             }
 
             for (int i = 0 ; i < curCommand->inputRedirectionCount ; i++)
@@ -103,13 +78,13 @@ void RunCommand(const CommandPool* commandPool)
                     break;
                 }
 
-                inputFds[i] = fd;
                 if (dup2(fd, STDIN_FILENO) < 0)
                 {
                     failed = true;
                     fprintf(stderr, "Failed to direction with errno : %d\n", errno);
                     break;
                 }
+                close(fd);
             }
 
             for (int i = 0 ; i < curCommand->outputRedirectionCount ; i++)
@@ -122,13 +97,13 @@ void RunCommand(const CommandPool* commandPool)
                     break;
                 }
 
-                outputFds[i] = fd;
                 if (dup2(fd, STDOUT_FILENO) < 0)
                 {
                     failed = true;
                     fprintf(stderr, "Failed to direction with errno : %d\n", errno);
                     break;
                 }
+                close(fd);
             }
 
             if (!failed)
@@ -142,7 +117,6 @@ void RunCommand(const CommandPool* commandPool)
                 }
                 else if (command != NULL)
                 {
-                    // printf("PID : %d\n", pid);
                     char** args = (char**)malloc(sizeof(char*) * (curCommand->flagsSize + 2));
 
                     args[0] = (char*)command;
@@ -157,41 +131,11 @@ void RunCommand(const CommandPool* commandPool)
                 }
             }
 
-            if (inputFds != NULL)
-            {
-                for (int i = 0 ; i < curCommand->inputRedirectionCount ; i++)
-                {
-                    int result = close(inputFds[i]);
-                    if (result < 0)
-                    {
-                        fprintf(stderr, "Failed to close redirection file with errno : %d\n", errno);
-                    }
-                }
-
-                free(inputFds);
-            }
-            
-            if (outputFds != NULL)
-            {
-                for (int i = 0 ; i < curCommand->outputRedirectionCount ; i++)
-                {
-                    int result = close(outputFds[i]);
-                    if (result < 0)
-                    {
-                        fprintf(stderr, "Failed to close redirection file with errno : %d\n", errno);
-                    }
-                }
-
-                free(outputFds);
-            }
-
             fflush(stdout);
         }
 
-        // printf("PIDB : %d\n", pid);
         if (commandPool->size > 1)
         {
-            // printf("%d %s D\n",pid,command);
             prevInput = pipeDesc[0];
             close(pipeDesc[1]);
 

@@ -277,7 +277,6 @@ int Tokenize(const char* line, CommandPool* commandPool)
             else if (redirectBy)
             {   
                 flags |= O_RDONLY;
-                flags |= O_TRUNC;
 
                 InsertInputRedirectionFile(curCommand, commandToken, flags, mode);
 

@@ -13,5 +13,8 @@ bool RunInternalCommand(Command* command);
 
 bool Help();
 bool ChangeDirectory();
+bool PWD();
+bool Date();
+bool WhoamI();
 
 #endif
