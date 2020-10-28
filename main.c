@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <memory.h>
 #include <limits.h>
 #include "tokenizer.h"
 #include "internal_command.h"
@@ -20,6 +21,13 @@ CommandPool commandPool = { 0 };
 
 void RunCommand(const CommandPool* commandPool)
 {
+    int prevInput = STDIN_FILENO;
+    int pipeDesc[2] = { 1 };
+
+    int savedStdin = dup(STDIN_FILENO);
+    int savedStdout = dup(STDOUT_FILENO);
+    int savedStderr = dup(STDERR_FILENO);
+
     for(int i = 0 ; i < commandPool->size ; i++)
     {
         bool failed = false;
@@ -34,9 +42,12 @@ void RunCommand(const CommandPool* commandPool)
         bool isInternalCommand = IsInternalCommand(command);
         int pid = 1;
 
-        int savedStdin = dup(STDIN_FILENO);
-        int savedStdout = dup(STDOUT_FILENO);
-        int savedStderr = dup(STDERR_FILENO);
+        // Create Pipe
+        if (commandPool->size > 1)
+        {
+            pipe(pipeDesc);
+            // printf("PIPE %d %d\n", pipeDesc[0], pipeDesc[1]);
+        }
 
         if (runBackground || !isInternalCommand)
         {
@@ -50,6 +61,28 @@ void RunCommand(const CommandPool* commandPool)
 
         if (pid == 0 || (isInternalCommand && !runBackground))
         {
+            if (commandPool->size > 1)
+            {
+                // printf("PIDA : %d - %d\n", pid, commandPool->size);
+                if (prevInput != STDIN_FILENO)
+                {
+                    // printf("%d %s %d A\n",pid,command, prevInput);
+                    dup2(prevInput, 0);
+                    close(prevInput);
+                }
+                if (pipeDesc[1] != STDOUT_FILENO && i != (commandPool->size - 1))
+                {
+                    // printf("%d %s %d B\n",pid,command, pipeDesc[1]);
+                    dup2(pipeDesc[1], STDOUT_FILENO);
+                    close(pipeDesc[1]);
+                }
+                else
+                {
+                    // printf("%d %s C\n",pid,command);
+                    // dup2(savedStdout, STDOUT_FILENO);
+                }
+            }
+
             if (curCommand->inputRedirectionCount > 0)
             {
                 inputFds = (int*)malloc(sizeof(int) * curCommand->inputRedirectionCount);
@@ -109,7 +142,18 @@ void RunCommand(const CommandPool* commandPool)
                 }
                 else if (command != NULL)
                 {
-                    printf("External command\n");
+                    // printf("PID : %d\n", pid);
+                    char** args = (char**)malloc(sizeof(char*) * (curCommand->flagsSize + 2));
+
+                    args[0] = (char*)command;
+                    for (int i = 0 ; i < curCommand->flagsSize ; i++)
+                    {
+                        args[i + 1] = curCommand->flags[i];
+                    }
+                    args[curCommand->flagsSize + 1] = NULL;
+
+                    execvp(command, args);
+                    fprintf(stderr, "Failed run command with errno : %d\n", errno);
                 }
             }
 
@@ -144,24 +188,33 @@ void RunCommand(const CommandPool* commandPool)
             fflush(stdout);
         }
 
+        // printf("PIDB : %d\n", pid);
+        if (commandPool->size > 1)
+        {
+            // printf("%d %s D\n",pid,command);
+            prevInput = pipeDesc[0];
+            close(pipeDesc[1]);
+
+            dup2(savedStdin, STDIN_FILENO);
+            dup2(savedStdout, STDOUT_FILENO);
+            dup2(savedStderr, STDERR_FILENO);
+        }
+
         if (pid == 0)
         {
             exit(EXIT_SUCCESS);
         }
-
-        if (runBackground)
+        else
         {
-            /** code **/
-        }
-        else if (!isInternalCommand)
-        {
-            wait(NULL);
-        }
-        else if (isInternalCommand)
-        {
-            dup2(savedStdin, STDIN_FILENO);
-            dup2(savedStdout, STDOUT_FILENO);
-            dup2(savedStderr, STDERR_FILENO);
+            if (commandPool->background)
+            {
+                /** code **/
+            }
+            else
+            {
+                int status = -1;
+                wait(&status);
+            }
         }
     }
 }
