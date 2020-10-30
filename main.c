@@ -134,14 +134,14 @@ void RunCommand(const CommandPool* commandPool)
             fflush(stdout);
         }
 
+        dup2(savedStdin, STDIN_FILENO);
+        dup2(savedStdout, STDOUT_FILENO);
+        dup2(savedStderr, STDERR_FILENO);
+
         if (commandPool->size > 1)
         {
             prevInput = pipeDesc[0];
             close(pipeDesc[1]);
-
-            dup2(savedStdin, STDIN_FILENO);
-            dup2(savedStdout, STDOUT_FILENO);
-            dup2(savedStderr, STDERR_FILENO);
         }
 
         if (pid == 0)
