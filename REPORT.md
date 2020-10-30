@@ -517,3 +517,5 @@ ctrl+C 시그널을 보내 mysh을 종료하고, gdb kill 명령어로 mysh를 �
 약간 아쉬운 점이 있긴 하지만 실제로 사용하는 shell과 70% 유사하게 동작해서 나중에 시간을 들여서 대중적으로 사용되는 shell과 동일하게 구현을 해보고 싶다는 생각이 들었다.
 
 ## 4. Github
+개발 소스 코드를 Github에 올려두었습니다.
+https://github.com/LDobac/mysh
